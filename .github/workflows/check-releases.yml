@@ -17,7 +17,7 @@ jobs:
         run: |
           latest_release=$(curl -s https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest | jq -r .tag_name)
           echo "Latest release: $latest_release"
-          last_release=$last_release
+          last_release=$LAST_RELEASE
           if [ last_release == "" ]; then            
             if [ "$latest_release" != "$last_release" ]; then
               echo "New release found!"
@@ -30,7 +30,7 @@ jobs:
             echo "First run, setting last release."
             echo "new_release=true" >> $GITHUB_ENV
           fi
-          echo "last_release=$latest_release" >> $GITHUB_ENV
+          echo "LAST_RELEASE=$latest_release" >> $GITHUB_ENV
 
       - name: Trigger build
         if: env.new_release == 'true'
