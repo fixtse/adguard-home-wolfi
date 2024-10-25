@@ -12,6 +12,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Restore last release cache
+        id: cache-last-release
+        uses: actions/cache/restore@v4
+        with:
+          path: last_release.txt
+          key: last-release
+
       - name: Check for new releases
         id: check_releases
         run: |
@@ -31,6 +38,13 @@ jobs:
             echo "new_release=true" >> $GITHUB_ENV
           fi
           echo $latest_release > ../last_release.txt
+
+      - name: Save last release cache
+        if: env.new_release == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: last_release.txt
+          key: last-release
 
       - name: Trigger build
         if: env.new_release == 'true'
