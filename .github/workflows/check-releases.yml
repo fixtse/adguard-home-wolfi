@@ -17,8 +17,8 @@ jobs:
         run: |
           latest_release=$(curl -s https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest | jq -r .tag_name)
           echo "Latest release: $latest_release"
-          if [ -n "$GITHUB_ENV" ]; then
-            last_release=$last_release
+          last_release=$(echo $GITHUB_ENV | grep -oP '(?<=last_release=)[^ ]+')
+          if [ last_release == "" ]; then            
             if [ "$latest_release" != "$last_release" ]; then
               echo "New release found!"
               echo "new_release=true" >> $GITHUB_ENV
