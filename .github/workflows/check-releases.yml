@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Check for new releases
         id: check_releases
@@ -21,19 +21,19 @@ jobs:
             last_release=$(cat ../last_release.txt)
             if [ "$latest_release" != "$last_release" ]; then
               echo "New release found!"
-              echo "::set-output name=new_release::true"
+              echo "new_release=true" >> $GITHUB_ENV
             else
               echo "No new releases."
-              echo "::set-output name=new_release::false"
+              echo "new_release=false" >> $GITHUB_ENV
             fi
           else
             echo "First run, setting last release."
-            echo "::set-output name=new_release::true"
+            echo "new_release=true" >> $GITHUB_ENV
           fi
           echo $latest_release > ../last_release.txt
 
       - name: Trigger build
-        if: steps.check_releases.outputs.new_release == 'true'
+        if: env.new_release == 'true'
         run: |
           echo "Triggering build action..."
           curl -X POST \
