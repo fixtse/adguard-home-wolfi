@@ -12,13 +12,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Restore last release cache
+        id: cache-last-release
+        uses: actions/cache/restore@v4
+        with:
+          path: release_version/adguard-home.txt
+          key: last-release
+
       - name: Check for new releases
         id: check_releases
         run: |
           latest_release=$(curl -s https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest | jq -r .tag_name)
           echo "Latest release: $latest_release"
-          last_release=$LAST_RELEASE
-          if [ last_release == "" ]; then            
+          if [ -f ../last_release.txt ]; then
+            last_release=$(cat ../last_release.txt)
             if [ "$latest_release" != "$last_release" ]; then
               echo "New release found!"
               echo "new_release=true" >> $GITHUB_ENV
@@ -30,7 +37,14 @@ jobs:
             echo "First run, setting last release."
             echo "new_release=true" >> $GITHUB_ENV
           fi
-          echo "LAST_RELEASE=$latest_release" >> $GITHUB_ENV
+          echo $latest_release > ../last_release.txt
+
+      - name: Save last release cache
+        if: env.new_release == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: release_version/adguard-home.txt
+          key: last-release
 
       - name: Trigger build
         if: env.new_release == 'true'
