@@ -4,6 +4,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+  push:
+    paths:
+      - 'release-version/*'
+
 jobs:
   build:
     runs-on: "ubuntu-latest"
@@ -17,8 +21,12 @@ jobs:
       - name: login to docker hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+      
+
       - name: build the image
         run: |
+          last_release=$(cat release_version/adguard-home.txt)
           docker buildx build --push\
             --tag fixtse/adguard-home-wolfi:latest \
+            --tag fixtse/adguard-home-wolfi:$last_release \
             --platform linux/amd64,linux/arm64/v8 .

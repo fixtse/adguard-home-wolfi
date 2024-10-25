@@ -11,47 +11,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Restore last release cache
-        id: cache-last-release
-        uses: actions/cache/restore@v4
         with:
-          path: release_version/adguard-home.txt
-          key: last-release
-
-      - name: Check for new releases
-        id: check_releases
+          token: ${{ secrets.REPO_SCOPED_TOKEN }}
+      
+      - name: Fetch release version
         run: |
-          latest_release=$(curl -s https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest | jq -r .tag_name)
-          echo "Latest release: $latest_release"
-          if [ -f ../last_release.txt ]; then
-            last_release=$(cat ../last_release.txt)
-            if [ "$latest_release" != "$last_release" ]; then
-              echo "New release found!"
-              echo "new_release=true" >> $GITHUB_ENV
-            else
-              echo "No new releases."
-              echo "new_release=false" >> $GITHUB_ENV
-            fi
-          else
-            echo "First run, setting last release."
-            echo "new_release=true" >> $GITHUB_ENV
-          fi
-          echo $latest_release > ../last_release.txt
-
-      - name: Save last release cache
-        if: env.new_release == 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: release_version/adguard-home.txt
-          key: last-release
-
-      - name: Trigger build
-        if: env.new_release == 'true'
+          curl -sL https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest | \
+          jq -r ".tag_name" > release_version/adguard-home.txt
+      - name: Check for modified files
+        id: git-check
+        run: echo "modified=$([ -z "$(git status --porcelain)" ] && echo "false" || echo "true")" >> $GITHUB_ENV
+      - name: Commit latest release version
+        if: env.modified == 'true'
         run: |
-          echo "Triggering build action..."
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.GH_TOKEN_ACTION }}" \
-            https://api.github.com/repos/fixtse/adguard-home-wolfi/actions/workflows/build.yml/dispatches \
-            -d '{"ref":"main"}'
+          git config --global user.name 'Fixt'
+          git config --global user.email 'fixtse@gmail.com'
+          git commit -am "New release version"
+          git push
+
+
