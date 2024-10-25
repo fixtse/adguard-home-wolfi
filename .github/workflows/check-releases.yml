@@ -24,9 +24,10 @@ jobs:
       - name: Commit latest release version
         if: env.modified == 'true'
         run: |
+          last_release=$(cat release_version/adguard-home.txt)
           git config --global user.name 'Fixt'
           git config --global user.email 'fixtse@gmail.com'
-          git commit -am "New release version"
+          git commit -am "Release $last_release"
           git push
 
 
