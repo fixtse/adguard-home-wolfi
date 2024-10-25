@@ -24,7 +24,7 @@ jobs:
       - name: build the image
         run: |
           last_release=$(cat release_version/adguard-home.txt)
-          docker buildx build --push\
-            --tag fixtse/adguard-home-wolfi:latest \
+          docker buildx build --push\            
             --tag fixtse/adguard-home-wolfi:$last_release \
+            --tag fixtse/adguard-home-wolfi:latest \
             --platform linux/amd64,linux/arm64/v8 .
