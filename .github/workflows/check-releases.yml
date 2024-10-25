@@ -1,0 +1,43 @@
+name: Check for New Releases
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at midnight
+  workflow_dispatch:
+
+jobs:
+  check-releases:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check for new releases
+        id: check_releases
+        run: |
+          latest_release=$(curl -s https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest | jq -r .tag_name)
+          echo "Latest release: $latest_release"
+          if [ -f ../last_release.txt ]; then
+            last_release=$(cat ../last_release.txt)
+            if [ "$latest_release" != "$last_release" ]; then
+              echo "New release found!"
+              echo "::set-output name=new_release::true"
+            else
+              echo "No new releases."
+              echo "::set-output name=new_release::false"
+            fi
+          else
+            echo "First run, setting last release."
+            echo "::set-output name=new_release::true"
+          fi
+          echo $latest_release > ../last_release.txt
+
+      - name: Trigger build
+        if: steps.check_releases.outputs.new_release == 'true'
+        run: |
+          echo "Triggering build action..."
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ secrets.GH_TOKEN_ACTION }}" \
+            https://api.github.com/repos/fixtse/adguard-home-wolfi/actions/workflows/build.yml/dispatches \
+            -d '{"ref":"main"}'
